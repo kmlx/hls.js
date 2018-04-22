@@ -19,10 +19,10 @@ import { hlsDefaultConfig } from './config';
 import { FragmentTracker } from './helper/fragment-tracker';
 
 import HlsEvents from './events';
-import EventEmitter from 'events';
+import EventEmitter from 'wolfy87-eventemitter';
 
 // polyfill for IE11
-require('string.prototype.endswith');
+// require('string.prototype.endswith');
 
 /**
  * @module Hls
@@ -34,55 +34,54 @@ export default class Hls {
    * @type {string}
    */
   static get version () {
-    return __VERSION__;
+    return '';
   }
-
+  
   /**
    * @type {boolean}
    */
   static isSupported () {
     return isSupported();
   }
-
+  
   /**
    * @type {HlsEvents}
    */
   static get Events () {
     return HlsEvents;
   }
-
+  
   /**
    * @type {HlsErrorTypes}
    */
   static get ErrorTypes () {
     return ErrorTypes;
   }
-
+  
   /**
    * @type {HlsErrorDetails}
    */
   static get ErrorDetails () {
     return ErrorDetails;
   }
-
+  
   /**
    * @type {HlsConfig}
    */
   static get DefaultConfig () {
-    if (!Hls.defaultConfig) {
+    if (!Hls.defaultConfig)
       return hlsDefaultConfig;
-    }
-
+    
     return Hls.defaultConfig;
   }
-
+  
   /**
    * @type {HlsConfig}
    */
   static set DefaultConfig (defaultConfig) {
     Hls.defaultConfig = defaultConfig;
   }
-
+  
   /**
    * Creates an instance of an HLS client that can attach to exactly one `HTMLMediaElement`.
    *
@@ -91,24 +90,21 @@ export default class Hls {
    */
   constructor (config = {}) {
     let defaultConfig = Hls.DefaultConfig;
-
-    if ((config.liveSyncDurationCount || config.liveMaxLatencyDurationCount) && (config.liveSyncDuration || config.liveMaxLatencyDuration)) {
+    
+    if ((config.liveSyncDurationCount || config.liveMaxLatencyDurationCount) && (config.liveSyncDuration || config.liveMaxLatencyDuration))
       throw new Error('Illegal hls.js config: don\'t mix up liveSyncDurationCount/liveMaxLatencyDurationCount and liveSyncDuration/liveMaxLatencyDuration');
-    }
-
+    
     for (let prop in defaultConfig) {
       if (prop in config) continue;
       config[prop] = defaultConfig[prop];
     }
-
-    if (config.liveMaxLatencyDurationCount !== undefined && config.liveMaxLatencyDurationCount <= config.liveSyncDurationCount) {
+    
+    if (config.liveMaxLatencyDurationCount !== undefined && config.liveMaxLatencyDurationCount <= config.liveSyncDurationCount)
       throw new Error('Illegal hls.js config: "liveMaxLatencyDurationCount" must be gt "liveSyncDurationCount"');
-    }
-
-    if (config.liveMaxLatencyDuration !== undefined && (config.liveMaxLatencyDuration <= config.liveSyncDuration || config.liveSyncDuration === undefined)) {
+    
+    if (config.liveMaxLatencyDuration !== undefined && (config.liveMaxLatencyDuration <= config.liveSyncDuration || config.liveSyncDuration === undefined))
       throw new Error('Illegal hls.js config: "liveMaxLatencyDuration" must be gt "liveSyncDuration"');
-    }
-
+    
     enableLogs(config.debug);
     this.config = config;
     this._autoLevelCapping = -1;
@@ -117,21 +113,21 @@ export default class Hls {
     observer.trigger = function trigger (event, ...data) {
       observer.emit(event, event, ...data);
     };
-
+    
     observer.off = function off (event, ...data) {
       observer.removeListener(event, ...data);
     };
     this.on = observer.on.bind(observer);
     this.off = observer.off.bind(observer);
     this.trigger = observer.trigger.bind(observer);
-
+    
     // core controllers and network loaders
-
+    
     /**
      * @member {AbrController} abrController
      */
     const abrController = this.abrController = new config.abrController(this);
-
+    
     const bufferController = new config.bufferController(this);
     const capLevelController = new config.capLevelController(this);
     const fpsController = new config.fpsController(this);
@@ -139,38 +135,37 @@ export default class Hls {
     const fragmentLoader = new FragmentLoader(this);
     const keyLoader = new KeyLoader(this);
     const id3TrackController = new ID3TrackController(this);
-
+    
     // network controllers
-
+    
     /**
      * @member {LevelController} levelController
      */
     const levelController = this.levelController = new LevelController(this);
-
+    
     // FIXME: FragmentTracker must be defined before StreamController because the order of event handling is important
     const fragmentTracker = new FragmentTracker(this);
-
+    
     /**
      * @member {StreamController} streamController
      */
     const streamController = this.streamController = new StreamController(this, fragmentTracker);
-
+    
     let networkControllers = [levelController, streamController];
-
+    
     // optional audio stream controller
     /**
      * @var {ICoreComponent | Controller}
      */
     let Controller = config.audioStreamController;
-    if (Controller) {
+    if (Controller)
       networkControllers.push(new Controller(this, fragmentTracker));
-    }
-
+    
     /**
      * @member {INetworkController[]} networkControllers
      */
     this.networkControllers = networkControllers;
-
+    
     /**
      * @var {ICoreComponent[]}
      */
@@ -185,54 +180,53 @@ export default class Hls {
       id3TrackController,
       fragmentTracker
     ];
-
+    
     // optional audio track and subtitle controller
     Controller = config.audioTrackController;
     if (Controller) {
       const audioTrackController = new Controller(this);
-
+      
       /**
        * @member {AudioTrackController} audioTrackController
        */
       this.audioTrackController = audioTrackController;
       coreComponents.push(audioTrackController);
     }
-
+    
     Controller = config.subtitleTrackController;
     if (Controller) {
       const subtitleTrackController = new Controller(this);
-
+      
       /**
        * @member {SubtitleTrackController} subtitleTrackController
        */
       this.subtitleTrackController = subtitleTrackController;
       coreComponents.push(subtitleTrackController);
     }
-
+    
     Controller = config.emeController;
     if (Controller) {
       const emeController = new Controller(this);
-
+      
       /**
        * @member {EMEController} emeController
        */
       this.emeController = emeController;
       coreComponents.push(emeController);
     }
-
+    
     // optional subtitle controller
     [config.subtitleStreamController, config.timelineController].forEach(Controller => {
-      if (Controller) {
+      if (Controller)
         coreComponents.push(new Controller(this));
-      }
     });
-
+    
     /**
      * @member {ICoreComponent[]}
      */
     this.coreComponents = coreComponents;
   }
-
+  
   /**
    * Dispose of the instance
    */
@@ -240,14 +234,12 @@ export default class Hls {
     logger.log('destroy');
     this.trigger(HlsEvents.DESTROYING);
     this.detachMedia();
-    this.coreComponents.concat(this.networkControllers).forEach(component => {
-      component.destroy();
-    });
+    this.coreComponents.concat(this.networkControllers).forEach(component => { component.destroy(); });
     this.url = null;
     this.observer.removeAllListeners();
     this._autoLevelCapping = -1;
   }
-
+  
   /**
    * Attach a media element
    * @param {HTMLMediaElement} media
@@ -257,7 +249,7 @@ export default class Hls {
     this.media = media;
     this.trigger(HlsEvents.MEDIA_ATTACHING, { media: media });
   }
-
+  
   /**
    * Detach from the media
    */
@@ -266,7 +258,7 @@ export default class Hls {
     this.trigger(HlsEvents.MEDIA_DETACHING);
     this.media = null;
   }
-
+  
   /**
    * Set the source URL. Can be relative or absolute.
    * @param {string} url
@@ -278,7 +270,7 @@ export default class Hls {
     // when attaching to a source URL, trigger a playlist load
     this.trigger(HlsEvents.MANIFEST_LOADING, { url: url });
   }
-
+  
   /**
    * Start loading data from the stream source.
    * Depending on default config, client starts loading automatically when a source is set.
@@ -288,21 +280,17 @@ export default class Hls {
    */
   startLoad (startPosition = -1) {
     logger.log(`startLoad(${startPosition})`);
-    this.networkControllers.forEach(controller => {
-      controller.startLoad(startPosition);
-    });
+    this.networkControllers.forEach(controller => { controller.startLoad(startPosition); });
   }
-
+  
   /**
    * Stop loading of any stream data.
    */
   stopLoad () {
     logger.log('stopLoad');
-    this.networkControllers.forEach(controller => {
-      controller.stopLoad();
-    });
+    this.networkControllers.forEach(controller => { controller.stopLoad(); });
   }
-
+  
   /**
    * Swap through possible audio codecs in the stream (for example to switch from stereo to 5.1)
    */
@@ -310,7 +298,7 @@ export default class Hls {
     logger.log('swapAudioCodec');
     this.streamController.swapAudioCodec();
   }
-
+  
   /**
    * When the media-element fails, this allows to detach and then re-attach it
    * as one call (convenience method).
@@ -323,14 +311,14 @@ export default class Hls {
     this.detachMedia();
     this.attachMedia(media);
   }
-
+  
   /**
    * @type {QualityLevel[]}
    */
   get levels () {
     return this.levelController.levels;
   }
-
+  
   /**
    * Index of quality level currently played
    * @type {number}
@@ -338,7 +326,7 @@ export default class Hls {
   get currentLevel () {
     return this.streamController.currentLevel;
   }
-
+  
   /**
    * Set quality level index immediately .
    * This will flush the current buffer to replace the quality asap.
@@ -350,7 +338,7 @@ export default class Hls {
     this.loadLevel = newLevel;
     this.streamController.immediateLevelSwitch();
   }
-
+  
   /**
    * Index of next quality level loaded as scheduled by stream controller.
    * @type {number}
@@ -358,7 +346,7 @@ export default class Hls {
   get nextLevel () {
     return this.streamController.nextLevel;
   }
-
+  
   /**
    * Set quality level index for next loaded data.
    * This will switch the video quality asap, without interrupting playback.
@@ -370,7 +358,7 @@ export default class Hls {
     this.levelController.manualLevel = newLevel;
     this.streamController.nextLevelSwitch();
   }
-
+  
   /**
    * Return the quality level of the currently or last (of none is loaded currently) segment
    * @type {number}
@@ -378,7 +366,7 @@ export default class Hls {
   get loadLevel () {
     return this.levelController.level;
   }
-
+  
   /**
    * Set quality level index for next loaded data in a conservative way.
    * This will switch the quality without flushing, but interrupt current loading.
@@ -389,7 +377,7 @@ export default class Hls {
     logger.log(`set loadLevel:${newLevel}`);
     this.levelController.manualLevel = newLevel;
   }
-
+  
   /**
    * get next quality level loaded
    * @type {number}
@@ -397,7 +385,7 @@ export default class Hls {
   get nextLoadLevel () {
     return this.levelController.nextLoadLevel;
   }
-
+  
   /**
    * Set quality level of next loaded segment in a fully "non-destructive" way.
    * Same as `loadLevel` but will wait for next switch (until current loading is done).
@@ -406,7 +394,7 @@ export default class Hls {
   set nextLoadLevel (level) {
     this.levelController.nextLoadLevel = level;
   }
-
+  
   /**
    * Return "first level": like a default level, if not set,
    * falls back to index of first level referenced in manifest
@@ -415,7 +403,7 @@ export default class Hls {
   get firstLevel () {
     return Math.max(this.levelController.firstLevel, this.minAutoLevel);
   }
-
+  
   /**
    * Sets "first-level", see getter.
    * @type {number}
@@ -424,7 +412,7 @@ export default class Hls {
     logger.log(`set firstLevel:${newLevel}`);
     this.levelController.firstLevel = newLevel;
   }
-
+  
   /**
    * Return start level (level of first fragment that will be played back)
    * if not overrided by user, first level appearing in manifest will be used as start level
@@ -435,7 +423,7 @@ export default class Hls {
   get startLevel () {
     return this.levelController.startLevel;
   }
-
+  
   /**
    * set  start level (level of first fragment that will be played back)
    * if not overrided by user, first level appearing in manifest will be used as start level
@@ -447,13 +435,12 @@ export default class Hls {
     logger.log(`set startLevel:${newLevel}`);
     const hls = this;
     // if not in automatic start level detection, ensure startLevel is greater than minAutoLevel
-    if (newLevel !== -1) {
+    if (newLevel !== -1)
       newLevel = Math.max(newLevel, hls.minAutoLevel);
-    }
-
+    
     hls.levelController.startLevel = newLevel;
   }
-
+  
   /**
    * Capping/max level value that should be used by automatic level selection algorithm (`ABRController`)
    * @type {number}
@@ -461,7 +448,7 @@ export default class Hls {
   get autoLevelCapping () {
     return this._autoLevelCapping;
   }
-
+  
   /**
    * Capping/max level value that should be used by automatic level selection algorithm (`ABRController`)
    * @type {number}
@@ -470,7 +457,7 @@ export default class Hls {
     logger.log(`set autoLevelCapping:${newLevel}`);
     this._autoLevelCapping = newLevel;
   }
-
+  
   /**
    * True when automatic level selection enabled
    * @type {boolean}
@@ -478,7 +465,7 @@ export default class Hls {
   get autoLevelEnabled () {
     return (this.levelController.manualLevel === -1);
   }
-
+  
   /**
    * Level set manually (if any)
    * @type {number}
@@ -486,7 +473,7 @@ export default class Hls {
   get manualLevel () {
     return this.levelController.manualLevel;
   }
-
+  
   /**
    * min level selectable in auto mode according to config.minAutoBitrate
    * @type {number}
@@ -495,13 +482,12 @@ export default class Hls {
     let hls = this, levels = hls.levels, minAutoBitrate = hls.config.minAutoBitrate, len = levels ? levels.length : 0;
     for (let i = 0; i < len; i++) {
       const levelNextBitrate = levels[i].realBitrate ? Math.max(levels[i].realBitrate, levels[i].bitrate) : levels[i].bitrate;
-      if (levelNextBitrate > minAutoBitrate) {
+      if (levelNextBitrate > minAutoBitrate)
         return i;
-      }
     }
     return 0;
   }
-
+  
   /**
    * max level selectable in auto mode according to autoLevelCapping
    * @type {number}
@@ -511,15 +497,14 @@ export default class Hls {
     const levels = hls.levels;
     const autoLevelCapping = hls.autoLevelCapping;
     let maxAutoLevel;
-    if (autoLevelCapping === -1 && levels && levels.length) {
+    if (autoLevelCapping === -1 && levels && levels.length)
       maxAutoLevel = levels.length - 1;
-    } else {
+    else
       maxAutoLevel = autoLevelCapping;
-    }
-
+    
     return maxAutoLevel;
   }
-
+  
   /**
    * next automatically selected quality level
    * @type {number}
@@ -529,7 +514,7 @@ export default class Hls {
     // ensure next auto level is between  min and max auto level
     return Math.min(Math.max(hls.abrController.nextAutoLevel, hls.minAutoLevel), hls.maxAutoLevel);
   }
-
+  
   /**
    * this setter is used to force next auto level.
    * this is useful to force a switch down in auto mode:
@@ -542,7 +527,7 @@ export default class Hls {
     const hls = this;
     hls.abrController.nextAutoLevel = Math.max(hls.minAutoLevel, nextLevel);
   }
-
+  
   /**
    * @type {AudioTrack[]}
    */
@@ -550,7 +535,7 @@ export default class Hls {
     const audioTrackController = this.audioTrackController;
     return audioTrackController ? audioTrackController.audioTracks : [];
   }
-
+  
   /**
    * index of the selected audio track (index in audio track lists)
    * @type {number}
@@ -559,25 +544,24 @@ export default class Hls {
     const audioTrackController = this.audioTrackController;
     return audioTrackController ? audioTrackController.audioTrack : -1;
   }
-
+  
   /**
    * selects an audio track, based on its index in audio track lists
    * @type {number}
    */
   set audioTrack (audioTrackId) {
     const audioTrackController = this.audioTrackController;
-    if (audioTrackController) {
+    if (audioTrackController)
       audioTrackController.audioTrack = audioTrackId;
-    }
   }
-
+  
   /**
    * @type {Seconds}
    */
   get liveSyncPosition () {
     return this.streamController.liveSyncPosition;
   }
-
+  
   /**
    * get alternate subtitle tracks list from playlist
    * @type {SubtitleTrack[]}
@@ -586,7 +570,7 @@ export default class Hls {
     const subtitleTrackController = this.subtitleTrackController;
     return subtitleTrackController ? subtitleTrackController.subtitleTracks : [];
   }
-
+  
   /**
    * index of the selected subtitle track (index in subtitle track lists)
    * @type {number}
@@ -595,18 +579,17 @@ export default class Hls {
     const subtitleTrackController = this.subtitleTrackController;
     return subtitleTrackController ? subtitleTrackController.subtitleTrack : -1;
   }
-
+  
   /**
    * select an subtitle track, based on its index in subtitle track lists
    * @type{number}
    */
   set subtitleTrack (subtitleTrackId) {
     const subtitleTrackController = this.subtitleTrackController;
-    if (subtitleTrackController) {
+    if (subtitleTrackController)
       subtitleTrackController.subtitleTrack = subtitleTrackId;
-    }
   }
-
+  
   /**
    * @type {booelan}
    */
@@ -614,15 +597,14 @@ export default class Hls {
     const subtitleTrackController = this.subtitleTrackController;
     return subtitleTrackController ? subtitleTrackController.subtitleDisplay : false;
   }
-
+  
   /**
    * Enable/disable subtitle display rendering
    * @type {boolean}
    */
   set subtitleDisplay (value) {
     const subtitleTrackController = this.subtitleTrackController;
-    if (subtitleTrackController) {
+    if (subtitleTrackController)
       subtitleTrackController.subtitleDisplay = value;
-    }
   }
 }

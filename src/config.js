@@ -31,7 +31,7 @@ export var hlsDefaultConfig = {
   maxBufferLength: 30, // used by stream-controller
   maxBufferSize: 60 * 1000 * 1000, // used by stream-controller
   maxBufferHole: 0.5, // used by stream-controller
-
+  
   lowBufferWatchdogPeriod: 0.5, // used by stream-controller
   highBufferWatchdogPeriod: 3, // used by stream-controller
   nudgeOffset: 0.1, // used by stream-controller
@@ -90,27 +90,26 @@ export var hlsDefaultConfig = {
   emeEnabled: false, // used by eme-controller
   widevineLicenseUrl: undefined, // used by eme-controller
   requestMediaKeySystemAccessFunc:
-            requestMediaKeySystemAccess // used by eme-controller
+  requestMediaKeySystemAccess // used by eme-controller
 };
 
-if (__USE_SUBTITLES__) {
-  hlsDefaultConfig.subtitleStreamController = SubtitleStreamController;
-  hlsDefaultConfig.subtitleTrackController = SubtitleTrackController;
-  hlsDefaultConfig.timelineController = TimelineController;
-  hlsDefaultConfig.cueHandler = Cues; // used by timeline-controller
-  hlsDefaultConfig.enableCEA708Captions = true; // used by timeline-controller
-  hlsDefaultConfig.enableWebVTT = true; // used by timeline-controller
-  hlsDefaultConfig.captionsTextTrack1Label = 'English'; // used by timeline-controller
-  hlsDefaultConfig.captionsTextTrack1LanguageCode = 'en'; // used by timeline-controller
-  hlsDefaultConfig.captionsTextTrack2Label = 'Spanish'; // used by timeline-controller
-  hlsDefaultConfig.captionsTextTrack2LanguageCode = 'es'; // used by timeline-controller
-}
+// if (__USE_SUBTITLES__) {
+//   hlsDefaultConfig.subtitleStreamController = SubtitleStreamController;
+//   hlsDefaultConfig.subtitleTrackController = SubtitleTrackController;
+//   hlsDefaultConfig.timelineController = TimelineController;
+//   hlsDefaultConfig.cueHandler = Cues; // used by timeline-controller
+//   hlsDefaultConfig.enableCEA708Captions = true; // used by timeline-controller
+//   hlsDefaultConfig.enableWebVTT = true; // used by timeline-controller
+//   hlsDefaultConfig.captionsTextTrack1Label = 'English'; // used by timeline-controller
+//   hlsDefaultConfig.captionsTextTrack1LanguageCode = 'en'; // used by timeline-controller
+//   hlsDefaultConfig.captionsTextTrack2Label = 'Spanish'; // used by timeline-controller
+//   hlsDefaultConfig.captionsTextTrack2LanguageCode = 'es'; // used by timeline-controller
+// }
 
-if (__USE_ALT_AUDIO__) {
-  hlsDefaultConfig.audioStreamController = AudioStreamController;
-  hlsDefaultConfig.audioTrackController = AudioTrackController;
-}
-
-if (__USE_EME_DRM__) {
-  hlsDefaultConfig.emeController = EMEController;
-}
+// if (__USE_ALT_AUDIO__) {
+//   hlsDefaultConfig.audioStreamController = AudioStreamController;
+//   hlsDefaultConfig.audioTrackController = AudioTrackController;
+// }
+//
+// if (__USE_EME_DRM__)
+//   hlsDefaultConfig.emeController = EMEController;
