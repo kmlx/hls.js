@@ -9,14 +9,14 @@ import PlaylistLoader from './loader/playlist-loader';
 import FragmentLoader from './loader/fragment-loader';
 import KeyLoader from './loader/key-loader';
 
+import { FragmentTracker } from './controller/fragment-tracker';
 import StreamController from './controller/stream-controller';
 import LevelController from './controller/level-controller';
 import ID3TrackController from './controller/id3-track-controller';
 
-import { isSupported } from './helper/is-supported';
+import { isSupported } from './is-supported';
 import { logger, enableLogs } from './utils/logger';
 import { hlsDefaultConfig } from './config';
-import { FragmentTracker } from './helper/fragment-tracker';
 
 import HlsEvents from './events';
 import EventEmitter from 'wolfy87-eventemitter';
@@ -119,6 +119,7 @@ export default class Hls {
     };
     this.on = observer.on.bind(observer);
     this.off = observer.off.bind(observer);
+    this.once = observer.once.bind(observer);
     this.trigger = observer.trigger.bind(observer);
     
     // core controllers and network loaders
@@ -591,7 +592,7 @@ export default class Hls {
   }
   
   /**
-   * @type {booelan}
+   * @type {boolean}
    */
   get subtitleDisplay () {
     const subtitleTrackController = this.subtitleTrackController;

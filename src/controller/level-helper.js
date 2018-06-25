@@ -1,8 +1,30 @@
 /**
- * Level Helper class, providing methods dealing with playlist sliding and drift
-*/
+ * @module LevelHelper
+ *
+ * Providing methods dealing with playlist sliding and drift
+ *
+ * TODO: Create an actual `Level` class/model that deals with all this logic in an object-oriented-manner.
+ *
+ * */
 
 import { logger } from '../utils/logger';
+
+export function addGroupId (level, type, id) {
+  switch (type) {
+  case 'audio':
+    if (!level.audioGroupIds) {
+      level.audioGroupIds = [];
+    }
+    level.audioGroupIds.push(id);
+    break;
+  case 'text':
+    if (!level.textGroupIds) {
+      level.textGroupIds = [];
+    }
+    level.textGroupIds.push(id);
+    break;
+  }
+}
 
 export function updatePTS (fragments, fromIdx, toIdx) {
   let fragFrom = fragments[fromIdx], fragTo = fragments[toIdx], fragToPTS = fragTo.startPTS;
