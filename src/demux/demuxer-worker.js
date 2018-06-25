@@ -6,7 +6,7 @@
 import DemuxerInline from '../demux/demuxer-inline';
 import Event from '../events';
 import { enableLogs } from '../utils/logger';
-import EventEmitter from 'events';
+import EventEmitter from 'wolfy87-eventemitter';
 
 let DemuxerWorker = function (self) {
   // observer setup

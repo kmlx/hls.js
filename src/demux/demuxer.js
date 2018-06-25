@@ -4,7 +4,7 @@ import { logger } from '../utils/logger';
 import { ErrorTypes, ErrorDetails } from '../errors';
 import EventEmitter from 'wolfy87-eventemitter';
 // import work from 'webworkify-webpack';
-import { getMediaSource } from '../helper/mediasource-helper';
+import { getMediaSource } from '../utils/mediasource-helper';
 import { getSelfScope } from '../utils/get-self-scope';
 
 // see https://stackoverflow.com/a/11237259/589493
